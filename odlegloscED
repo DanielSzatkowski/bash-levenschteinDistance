@@ -1,0 +1,139 @@
+#!/bin/bash
+
+#funkcja zwraca najmniejsza z  3 liczb
+function minimum {
+	#echo "${1} ${2} ${3}"
+	if [ ${1} -le ${2} ]
+	then
+		if [ ${1} -le ${3} ]
+		then
+			echo ${1}
+		else
+			echo ${3}
+		fi
+	else
+		if [ ${2} -le ${3} ]
+		then
+			echo ${2}
+		else
+			echo ${3}
+		fi
+	fi
+}
+
+index1wyrazu=0
+#funkcja za pierwszy parametr przyjnuje wielkosc 1 wyrazu
+function wyznaczIndex1Wyrazu {
+	dlugosc=$1
+	if [ $index1wyrazu -lt $dlugosc ]
+	then
+		zmiennaPom=$(($index1wyrazu+1))
+		index1wyrazu=$zmiennaPom
+
+		wartoscZwracana=$(($index1wyrazu-1))
+		echo $wartoscZwracana
+	else
+		index1wyrazu=0
+		echo $index1wyrazu
+	fi
+}
+
+function liczOdleglosc {
+	#jesli dl jednego z wyrazow =0 wyswietl dlugosc drugiego wyrazu
+	if [ ${#1} -eq 0 ]
+	then
+		echo "${1} ${2} $(${#2})"
+	elif [ ${#2} -eq 0 ]
+	then
+		echo "${1} ${2} $(${#2})"
+	else
+	
+		dlWyrazu1=$((${#1}))
+		dlWyrazu2=$((${#2}))
+		
+		#brak tablic dwuwymiarowych w bashu - kolejne wiersze "tablicy dwuwymiarowej" zapisuje jedna po drugiej w jednej tabeli	
+		for i in $(seq 0 $dlWyrazu1)
+		do
+			tablica[$i]=$i
+		done
+		for j in $(seq 1 $dlWyrazu2)
+		do
+			tablica[$(($j*$dlWyrazu1+1))]=$j
+		done
+
+		#wypelniam reszte tabeli
+		for x in $(seq 1 $dlWyrazu2)
+		do
+			for y in $(seq 1 $dlWyrazu1)
+			do
+				#wyznaczenie liczby która jest pozycji "o jeden w gore" w tablicy
+				pomocnicza=0
+				if [ $x -eq 1 ]
+				then
+					pomocnicza=1
+				fi
+				liczbaG=${tablica[$(($x*$dlWyrazu1+$y+1-$pomocnicza-$dlWyrazu1))]}
+				
+				#wyznaczanie liczby "po lewo"
+				liczbaL=${tablica[$(($x*$dlWyrazu1+$y+1-1))]}
+				
+				#wyznaczanie liczby "na gorze i w lewo"
+				liczbaGL=${tablica[$(($x*$dlWyrazu1+$y+1-$pomocnicza-$dlWyrazu1-1))]}
+				echo $liczbaGL
+				echo $liczbaL
+				echo $liczbaG
+				#wyznaczanie minimalnego Kosztu
+				minimalnyKoszt=$(minimum $liczbaGL $liczbaL $liczbaG)
+
+				#sparwzdam czy litery sa takie same - jezeli nei trzeba dodac 1 do minimalnego kosztu
+				wyraz1=${1}
+				wyraz2=${2}
+
+				#wywolywanie funkcji pomocniczej liczacej bierzacy index litery 1 wyrazu (iterujemy od 2 do liczby liter wyrazu 1 wiec nie da sei opisac index litery za pomoca iteratora)
+				index=$(wyznaczIndex1Wyrazu $dlWyrazu1)
+				literaWyr1=${wyraz1:$index:1}
+				literaWyr2=${wyraz2:$(($x-1)):1}
+
+				k=$(($x-1))
+				if [ $literaWyr1 != $literaWyr2 ] || [ $k -ne $index ]
+				then
+					echo "nie rownaja sie"
+					echo "indexy $k $index"
+					echo "litery $literaWyr1 $literaWyr2"
+
+					tmp=$(($minimalnyKoszt+1))
+					minimalnyKoszt=$tmp
+				fi
+				echo $minimalnyKoszt
+
+				tablica[$(($x*$dlWyrazu1+$y+1))]=$minimalnyKoszt
+			echo "--------------------"
+			done
+		done	
+
+		echo "${1} ${2} ${tablica[$(($dlWyrazu2*dlWyrazu1+dlugoscWyrazu1+dlWyrazu2))]}"
+	fi	
+}
+
+#uruchomienie liczenia
+wyrazy=`cat ${1}`
+
+pierwszyWyraz=0
+drugiWyraz=0
+liczba=0
+
+for hh in $wyrazy
+do
+	q=$(($liczba+1))
+	liczba=$q
+
+	ktoryRaz=$((liczba%2))
+
+	if [ $ktoryRaz -eq 1 ]
+	then
+		pierwszyWyraz=$hh
+	else
+		drugiWyraz=$hh
+		liczOdleglosc $pierwszyWyraz $drugiWyraz
+	fi
+done
